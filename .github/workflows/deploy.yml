@@ -12,12 +12,13 @@ jobs:
     steps:
     # 코드 체크아웃
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     # JDK 21 설정
     - name: Set up JDK 21
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
+        distribution: 'temurin'
         java-version: '21'
 
     # gradlew 권한 설정
@@ -30,6 +31,15 @@ jobs:
         mkdir -p src/main/resources
         echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
 
+    # Gradle 캐시 추가 (빌드 속도 개선)
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
     # gradle 빌드
     - name: Build with Gradle
       run: ./gradlew clean build -x test
@@ -40,15 +50,16 @@ jobs:
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
 
+    # ssh-agent 최신 버전
     - name: Add SSH key
-      uses: webfactory/ssh-agent@v0.5.3
+      uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
-
+    # known_hosts
     - name: Add known_hosts
       run: |
-        ssh-keyscan -H ed25519 43.203.118.115 >> ~/.ssh/known_hosts
+        ssh-keyscan -H ed25519 3.39.6.173 >> ~/.ssh/known_hosts
 
     #- name: 기존프로세스 종료
     #  run: |
@@ -56,11 +67,11 @@ jobs:
 
     - name: Deploy to Server with rsync
       run: | 
-         rsync -avz -e "ssh -o StrictHostKeyChecking=no" build/libs/*.jar ubuntu@43.203.118.115:~/app
+         rsync -avz -e "ssh -o StrictHostKeyChecking=no" build/libs/*.jar ubuntu@3.39.6.173:~/app
 
     - name: Run SSH commands
       run: |
-        ssh -i ~/.ssh/id_ed25519 ubuntu@43.203.118.115 << 'EOF'
+        ssh -i ~/.ssh/id_ed25519 ubuntu@3.39.6.173 << 'EOF'
           pkill -f 'java -jar' || true
           nohup java -jar ~/app/my-app-0.0.1-SNAPSHOT.jar > log.txt 2>&1 &
         EOF
