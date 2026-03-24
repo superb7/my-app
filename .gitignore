@@ -1,6 +1,10 @@
 # 환경설정 .gitignore
 config/
 
+# config 제외
+!com/sp/app/config/
+!com/sp/app/config/**
+
 HELP.md
 .gradle
 build/
