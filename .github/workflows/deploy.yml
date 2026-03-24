@@ -32,7 +32,7 @@ jobs:
         mkdir -p src/main/resources
         cat << 'EOF' > src/main/resources/application.yml 
         ${{ secrets.APPLICATION_YML }}
-EOF
+        EOF
 
     # Gradle 캐시 추가 (빌드 속도 개선)
     - name: Cache Gradle packages
