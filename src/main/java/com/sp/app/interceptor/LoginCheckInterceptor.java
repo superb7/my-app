@@ -1,5 +1,6 @@
 package com.sp.app.interceptor;
 
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
     : 로그인 검사, 응답시간 계산, 이벤트기간 만료등에서 이용 가능
 */
 @Slf4j
+@Component
 public class LoginCheckInterceptor implements HandlerInterceptor {
 	/*
 	   - 클라이언트 요청이 컨트롤러에 도착하기 전에 호출
@@ -28,7 +30,6 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
 		
 		try {
 			HttpSession session = req.getSession(false);
-			System.out.println("--------------------------------" + session);
 			
 			SessionInfo info = session != null ? (SessionInfo) session.getAttribute("member") : null;
 			String cp = req.getContextPath();
