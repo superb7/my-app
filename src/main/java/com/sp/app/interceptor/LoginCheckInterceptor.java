@@ -27,9 +27,10 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest req, HttpServletResponse resp, Object handler) throws Exception {
 		boolean result = true;
-
 		try {
 			HttpSession session = req.getSession();
+			log.info("인터셉터 진입: {}", req.getRequestURI());
+			log.info("세션 진입: {}", session);
 			
 			SessionInfo info = (SessionInfo) session.getAttribute("member");
 			String cp = req.getContextPath();
