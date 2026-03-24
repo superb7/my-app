@@ -27,8 +27,8 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
 		boolean result = true;
 
 		try {
-			HttpSession session = req.getSession();
-			SessionInfo info = (SessionInfo)session.getAttribute("member");
+			HttpSession session = req.getSession(false);
+			SessionInfo info = session != null ? (SessionInfo) session.getAttribute("member") : null;
 			String cp = req.getContextPath();
 			String uri = req.getRequestURI();
 			String queryString = req.getQueryString();
