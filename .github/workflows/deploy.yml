@@ -57,7 +57,7 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/spring-my-app:latest .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/spring-my-app:latest
 
-      # 개인키를 가지고 AWS에 접속(ssh-agent 최신 버전)
+      # 개인키를 가지고 AWS에 접속 (ssh-agent 최신 버전)
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.9.0
         with:
