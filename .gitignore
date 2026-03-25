@@ -1,7 +1,9 @@
 # 환경설정 .gitignore
+
+# application.yml .gitignore
 config/
 
-# config 제외
+# config 자바 파일 제외
 !com/sp/app/config/
 !com/sp/app/config/**
 
