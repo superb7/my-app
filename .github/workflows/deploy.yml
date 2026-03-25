@@ -1,4 +1,4 @@
-name: Deploy with DockerHub to Ubuntu Server
+name: Deploy with Docker Compose to Ubuntu Server
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/spring-my-app:latest .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/spring-my-app:latest
 
-      # 개인키를 가지고 AWS에 접속 (ssh-agent 최신 버전)
+      # 개인키를 가지고 AWS에 접속(ssh-agent 최신 버전)
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -69,11 +69,10 @@ jobs:
           ssh-keyscan -H ed25519 43.203.118.115 >> ~/.ssh/known_hosts
 
       # container 실행
-      - name: Deploy on server using DockerHub image
+      - name: Deploy on server using Docker Compose
         run: |
           ssh ubuntu@43.203.118.115 << 'EOF'
-            docker stop spring-my-app || true
-            docker rm spring-my-app || true
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/spring-my-app:latest
-            docker run -d --name spring-my-app -p 9090:9090 ${{ secrets.DOCKERHUB_USERNAME }}/spring-my-app:latest
+            cd ~/app
+            docker compose pull
+            docker compose up -d
           EOF
