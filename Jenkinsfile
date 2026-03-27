@@ -15,17 +15,6 @@ pipeline {
                 checkout scm
             }
         }
-
-        stage('Prepare application.yml') {
-            steps {
-                withCredentials([file(credentialsId: APP_YML_FILE, variable: 'APP_YML')]) {
-                    sh '''
-                        mkdir -p $WORKSPACE/docker-context
-                        cp $APP_YML $WORKSPACE/docker-context/application.yml
-                    '''
-                }
-            }
-        }
     
         // gradlew 권한 부여
         stage('Gradle Permission') {
@@ -57,14 +46,16 @@ pipeline {
         // 컨테이너 실행
         stage('Run Container') {
             steps {
-                sh '''
-                     docker stop $CONTAINER_NAME || true
-                     docker rm $CONTAINER_NAME || true
-                     docker run -d -p 9090:9090
-                        --name $CONTAINER_NAME  \
-                        -v $APP_YML:/app/application.yml:ro \
-                        $IMAGE_NAME
-                '''
+                withCredentials([file(credentialsId: APP_YML_FILE, variable: 'APP_YML')]) {
+                    sh '''
+                         docker stop $CONTAINER_NAME || true
+                         docker rm $CONTAINER_NAME || true
+                         docker run -d -p 9090:9090
+                            --name $CONTAINER_NAME  \
+                            -v $APP_YML:/app/application.yml:ro \
+                            $IMAGE_NAME
+                    '''
+                }
             }
         }
 
