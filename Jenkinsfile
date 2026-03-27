@@ -43,7 +43,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh '''
-                    docker build -t spring-my-app
+                    docker build -t spring-my-app .
                 '''
             }
         }
