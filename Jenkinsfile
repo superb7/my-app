@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+      IMAGE_NAME = "my-app"
+      CONTAINER_NAME = "my-app-container"
+      APP_YML_FILE = 'APPLICATION_YML_FILE'
+    }
+    
     stages {
         // 감지 = main : push (commit)
         stage('Check Out') {
@@ -10,18 +16,11 @@ pipeline {
             }
         }
 
-        stage('Fix Permissions') {
-          steps {
-            sh 'sudo chown -R jenkins:jenkins src'
-          }
-        }
-
         stage('Prepare application.yml') {
             steps {
-                withCredentials([file(credentialsId: 'APPLICATION_YML_FILE', variable: 'APP_YML')]) {
+                withCredentials([file(credentialsId: APP_YML_FILE, variable: 'APP_YML')]) {
                     sh '''
-                        mkdir -p src/main/resources
-                        cp $APP_YML src/main/resources/application.yml
+                        cp $APP_YML ./application.yml
                     '''
                 }
             }
@@ -46,21 +45,24 @@ pipeline {
         }
 
         // Docker Build 
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build -t spring-my-app .
+                    docker build -t $IMAGE_NAME .
                 '''
             }
         }
 
         // 컨테이너 실행
-        stage('Deploy') {
+        stage('Run Container') {
             steps {
                 sh '''
-                     docker stop spring-my-app || true
-                     docker rm spring-my-app || true
-                     docker run -d --name spring-my-app -p 9090:9090 spring-my-app
+                     docker stop $CONTAINER_NAME || true
+                     docker rm $CONTAINER_NAME || true
+                     docker run -d -p 9090:9090
+                        --name $CONTAINER_NAME  \
+                        -v $(pwd)/application.yml:/app/application.yml \
+                        $IMAGE_NAME
                 '''
             }
         }
