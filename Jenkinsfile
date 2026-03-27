@@ -20,7 +20,8 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: APP_YML_FILE, variable: 'APP_YML')]) {
                     sh '''
-                        cp $APP_YML ./application.yml
+                        mkdir -p $WORKSPACE/docker-context
+                        cp $APP_YML $WORKSPACE/docker-context/application.yml
                     '''
                 }
             }
@@ -61,7 +62,7 @@ pipeline {
                      docker rm $CONTAINER_NAME || true
                      docker run -d -p 9090:9090
                         --name $CONTAINER_NAME  \
-                        -v $(pwd)/application.yml:/app/application.yml:ro \
+                        -v $APP_YML:/app/application.yml:ro \
                         $IMAGE_NAME
                 '''
             }
