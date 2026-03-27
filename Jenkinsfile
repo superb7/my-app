@@ -61,7 +61,7 @@ pipeline {
                      docker rm $CONTAINER_NAME || true
                      docker run -d -p 9090:9090
                         --name $CONTAINER_NAME  \
-                        -v $(pwd)/application.yml:/app/application.yml \
+                        -v $(pwd)/application.yml:/app/application.yml:ro \
                         $IMAGE_NAME
                 '''
             }
