@@ -10,6 +10,12 @@ pipeline {
             }
         }
 
+        stage('Fix Permissions') {
+          steps {
+            sh 'sudo chown -R jenkins:jenkins src'
+          }
+        }
+
         stage('Prepare application.yml') {
             steps {
                 withCredentials([file(credentialsId: 'APPLICATION_YML_FILE', variable: 'APP_YML')]) {
