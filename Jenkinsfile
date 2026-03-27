@@ -50,7 +50,7 @@ pipeline {
                     sh '''
                          docker stop $CONTAINER_NAME || true
                          docker rm $CONTAINER_NAME || true
-                         docker run -d -p 9090:9090
+                         docker run -d -p 9090:9090 \
                             --name $CONTAINER_NAME  \
                             -v $APP_YML:/app/application.yml:ro \
                             $IMAGE_NAME
