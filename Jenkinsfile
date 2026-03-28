@@ -4,7 +4,7 @@ pipeline {
     environment {
       IMAGE_NAME = "my-app"
       APP_YML_FILE = 'APPLICATION_YML_FILE'
-      APP_DIR = "${HOME}/app"
+      APP_DIR = "/home/blue/app"
     }
     
     stages {
