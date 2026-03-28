@@ -3,8 +3,8 @@ pipeline {
 
     environment {
       IMAGE_NAME = "my-app"
-      CONTAINER_NAME = "my-app-container"
       APP_YML_FILE = 'APPLICATION_YML_FILE'
+      APP_DIR = "~/app"
     }
     
     stages {
@@ -16,21 +16,10 @@ pipeline {
             }
         }
     
-        // gradlew 권한 부여
-        stage('Gradle Permission') {
+        stage('Build with Gradle') {
             steps {
-                sh '''
-                    chmod +x gradlew
-                '''
-            }
-        }
-
-        // build 
-        stage('Gradle Build') {
-            steps {
-                sh '''
-                    ./gradlew clean build -x test
-                '''
+                sh 'chmod +x ./gradlew'
+                sh './gradlew clean build -x test'
             }
         }
 
@@ -48,12 +37,13 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: APP_YML_FILE, variable: 'APP_YML')]) {
                     sh '''
-                         docker stop $CONTAINER_NAME || true
-                         docker rm $CONTAINER_NAME || true
-                         docker run -d -p 9090:9090 \
-                            --name $CONTAINER_NAME  \
-                            -v $APP_YML:/app/application.yml:ro \
-                            $IMAGE_NAME
+                         cd $APP_DIR
+
+                         export IMAGE_NAME=${IMAGE_NAME}
+                         export APP_YML_PATH=${APP_YML}
+
+                         docker compose pull
+                         docker compose up -d --remove-orphans
                     '''
                 }
             }
