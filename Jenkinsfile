@@ -3,8 +3,8 @@ pipeline {
 
     environment {
       IMAGE_NAME = "my-app"
-      APP_YML_FILE = 'APPLICATION_YML_FILE'
-      APP_DIR = "/home/blue/app"
+      SERVER_IP = "127.0.0.1"
+      APP_DIR = "~/app"
     }
     
     stages {
@@ -32,19 +32,17 @@ pipeline {
             }
         }
 
-        // 컨테이너 실행
-        stage('Run Container') {
+        // Docker Compose 실행
+        stage('Deploy with Docker Compose') {
             steps {
-                withCredentials([file(credentialsId: APP_YML_FILE, variable: 'APP_YML')]) {
-                    sh '''
-                         cd $APP_DIR
-
-                         export IMAGE_NAME=${IMAGE_NAME}
-                         export APP_YML_PATH=${APP_YML}
-
-                         docker compose pull
-                         docker compose up -d --remove-orphans
-                    '''
+                sshagent(['UBUNTU_SSH_KEY']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no blue@$SERVER_IP '
+                            cd $APP_DIR
+                            docker compose pull
+                            docker compose up -d --remove-orphans
+                        '
+                    """
                 }
             }
         }
