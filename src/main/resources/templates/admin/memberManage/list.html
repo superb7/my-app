@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+	<table class="table table-borderless mt-2 mb-0">
+		<tr>
+			<td align="left" width="50%" valign="bottom">
+				<p class="form-control-plaintext p-0">
+					[[${dataCount}]]개([[${page}]]/[[${totalPage}]] 페이지)
+				</p>
+			</td>
+			<td align="right">
+				<div class="wrap-search-check">
+					<div class="form-check-inline">
+						<input type="checkbox" id="enabledCheck1" class="form-check-input" th:checked="${enabled == '1' or enabled == ''}">
+						<label class="form-check-label" for="enabledCheck1">활성</label>
+					</div>
+					<div class="form-check-inline">
+						<input type="checkbox" id="enabledCheck2" class="form-check-input" th:checked="${enabled == '0' or enabled == ''}">
+						<label class="form-check-label" for="enabledCheck2">비활성</label>
+					</div>
+					<div class="form-check-inline">
+						<input type="checkbox" id="nonMemberCheckbox" class="form-check-input" th:checked="${non == 1}">
+						<label class="form-check-label" for="nonMemberCheckbox">비회원 포함</label>
+					</div>
+				</div>
+			</td>
+		</tr>
+	</table>
+		
+	<table class="table table-hover board-list">
+		<thead class="table-light">
+			<tr> 
+				<th width="80">번호</th>
+				<th width="180">아이디</th>
+				<th width="100">구분</th>
+				<th width="100">이름</th>
+				<th width="100">생년월일</th>
+				<th width="120">전화번호</th>
+				<th width="80">권한</th>
+				<th width="70">상태</th>
+				<th>이메일</th>
+			</tr>
+		</thead>
+		
+		<tbody>
+			<tr th:each="dto, status: ${list}" class="hover-cursor" th:onclick="profile([[${dto.member_id}]], [[${page}]])"> 
+				<td th:text="${dataCount - (page-1) * size - status.index}"></td>
+				<td th:text="${#strings.isEmpty(dto.login_id) ? dto.sns_id : dto.login_id}"></td>
+				<td th:text="${#strings.isEmpty(dto.login_id) ? 'SNS 회원' : (#strings.isEmpty(dto.sns_id) ? '로컬 회원' : '로컬, SNS 회원')}"></td>
+				<td th:text="${dto.name}"></td>
+				<td th:text="${dto.birth}"></td>
+				<td th:text="${dto.tel}"></td>
+				<td th:switch="${dto.userLevel}">
+					<th:block th:case="1">회원</th:block>
+					<th:block th:case="31">강사</th:block>
+					<th:block th:case="0">비회원</th:block>
+					<th:block th:case="51">사원</th:block>
+					<th:block th:case="50">퇴사</th:block>
+					<th:block th:case="*">기타</th:block>
+				</td>
+				<td th:text="${dto.enabled == 1 ? '활성' : '잠금'}"></td>
+				<td th:text="${dto.email}"></td>
+			</tr>
+		</tbody>
+	</table>
+			 
+	<div class="page-navigation">
+		<th:block th:utext="${dataCount == 0 ? '등록된 게시물이 없습니다.' : paging}"></th:block>
+	</div>
+	
+	<div class="row board-list-footer">
+		<div class="col-md-3">
+			<button type="button" class="btn-default" onclick="resetList()" title="새로고침"><i class="bi bi-arrow-counterclockwise"></i></button>
+		</div>
+		<div class="col-md-6 text-center">
+			<div class="form-search">
+				<select id="searchType" name="schType">
+					<option value="login_id"  th:selected="${schType=='login_id'}">아이디</option>
+					<option value="name"      th:selected="${schType=='name'}">이름</option>
+					<option value="email"     th:selected="${schType=='email'}">이메일</option>
+					<option value="tel"       th:selected="${schType=='tel'}">전화번호</option>
+				</select>
+				<input type="text" id="keyword" name="kwd" th:value="${kwd}">
+				<button type="button" class="btn-default" onclick="searchList()"> <i class="bi bi-search"></i> </button>
+			</div>
+		</div>
+		<div class="col-md-3 text-end">
+			&nbsp;
+		</div>
+	</div>
+
+</html>
