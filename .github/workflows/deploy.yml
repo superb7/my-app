@@ -10,7 +10,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
 
     env:
-      JAR_NAME: my-app-0.0.1-SNAPSHOT
+      JAR_NAME: my-app-0.0.1-SNAPSHOT.jar
       APP_DIR: /opt/myapp
 
     steps:
