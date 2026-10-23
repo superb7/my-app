@@ -65,4 +65,4 @@ jobs:
                 --spring.config.additional-location="file:$APP_DIR/config/" \
                  > "$APP_DIR/log.txt" 2>&1 &
 
-        sleep 3
+        sleep 100
