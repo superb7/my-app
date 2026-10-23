@@ -60,5 +60,5 @@ jobs:
         # pkill -f "java -jar.*$JAR_NAME" || true
         # nohup java -jar "$APP_DIR/$JAR_NAME" > "$APP_DIR/log.txt" 2>&1 &
 
-        pkill -f my-app-0.0.1-SNAPSHOT.jar || true
+        # pkill -f my-app-0.0.1-SNAPSHOT.jar || true
         nohup java -jar /opt/myapp/my-app-0.0.1-SNAPSHOT.jar > /opt/myapp/log.txt 2>&1 &
