@@ -57,12 +57,9 @@ jobs:
         : > "$APP_DIR/log.txt"
 
         # 기존 실행중인 프로세스 삭제
-        # pkill -f "java -jar.*$JAR_NAME" || true
+        pkill -f "java -jar.*$JAR_NAME" || true
 
         # 백그라운드 실행
-        # nohup java -jar "$APP_DIR/$JAR_NAME" > "$APP_DIR/log.txt" 2>&1 &
-
-        pkill -f my-app-0.0.1-SNAPSHOT.jar || true
-        nohup java -jar /opt/myapp/my-app-0.0.1-SNAPSHOT.jar > /opt/myapp/log.txt 2>&1 &
-        sleep 10
-        cat /opt/myapp/log.txt
+        nohup java -jar "$APP_DIR/$JAR_NAME" \
+                --spring.config.additional-location="file:${APP_DIR}/config/" \
+                 > "$APP_DIR/log.txt" 2>&1 &
