@@ -53,4 +53,4 @@ jobs:
     - name: Run application
       run: |
         pkill -f "java -jar.*$JAR_NAME" || true       # 기존 실행중인 프로세스 삭제
-        nohup java -jar $JAR_NAME > log.txt 2>&1 &
+        nohup java -jar "$APP_DIR/$JAR_NAME" > "$APP_DIR/log.txt" 2>&1 &
