@@ -10,6 +10,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
 
     env:
+      APP_NAME: myapp
       JAR_NAME: my-app-0.0.1-SNAPSHOT.jar
       APP_DIR: /opt/myapp
 
@@ -49,18 +50,14 @@ jobs:
          rm -f $APP_DIR/*.jar
          mv $(ls build/libs/*.jar | grep -v 'plain.jar') $APP_DIR/$JAR_NAME
 
-    # 실행
-    - name: Run application
+    # 애플리케이션 재시작
+    - name: Restart application
+      shell: bash
       run: |
+         set -euo pipefail
 
-        # 기존 로그 삭제
-        : > "$APP_DIR/log.txt"
+         sudo systemctl restart "$APP_NAME"
+         sudo systemctl is-active --quiet "$APP_NAME"
 
-        # 기존 실행중인 프로세스 삭제
-        pkill -f "java -jar.*$JAR_NAME" || true
-
-        # setsid를 이용해 독립된 세션으로 백그라운드 실행
-        # nohup 으로 실행하면 실행후 바로 종료
-        env -u RUNNER_TRACKING_ID setsid java -jar "$APP_DIR/$JAR_NAME" \
-                --spring.config.additional-location="file:$APP_DIR/config/" \
-                 > "$APP_DIR/log.txt" 2>&1 &
+         echo "Deployment completed successfully."
+         sudo systemctl --no-pager --full status "$APP_NAME"
