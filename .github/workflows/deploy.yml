@@ -43,6 +43,28 @@ jobs:
     - name: Build application
       run: ./gradlew clean build -x test
 
+    - name: Debug workspace path
+      shell: bash
+      run: |
+        echo "PWD:"
+        pwd | cat -v
+
+        echo "GITHUB_WORKSPACE:"
+        printf '%s' "$GITHUB_WORKSPACE" | cat -v
+        echo
+
+        echo "Workspace bytes:"
+        printf '%s' "$GITHUB_WORKSPACE" | od -An -tx1c
+
+        echo "Compose-related environment:"
+        env | grep -E '^(COMPOSE|DOCKER|GITHUB_WORKSPACE|RUNNER_WORKSPACE|PWD)=' | cat -v || true
+
+        echo "Docker Compose version:"
+        docker compose version
+
+        echo "Directory contents:"
+        ls -lb
+
     - name: Validate Docker Compose
       run: docker compose config -q
 
