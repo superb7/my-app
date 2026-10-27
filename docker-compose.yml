@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: myapp:latest
+    container_name: myapp
+    restart: unless-stopped
+
+    expose:
+      - "9091"
+
+    volumes:
+      - /opt/myapp/config:/app/config:ro
+
+    networks:
+      - myapp-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: myapp-nginx
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+
+    depends_on:
+      - app
+
+    networks:
+      - myapp-network
+
+networks:
+  myapp-network:
+    driver: bridge
