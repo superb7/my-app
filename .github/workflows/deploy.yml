@@ -50,3 +50,15 @@ jobs:
     - name: Deploy with Docker Compose
       run: |
         docker compose up -d --build --remove-orphans
+
+    - name: Verify deployment
+      run: |
+        sleep 10
+
+        if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" != "true" ]; then
+          docker logs "$CONTAINER_NAME" || true
+          exit 1
+        fi
+
+        docker ps --filter "name=$CONTAINER_NAME"
+        docker logs --tail 100 "$CONTAINER_NAME"
