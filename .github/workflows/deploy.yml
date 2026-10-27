@@ -43,32 +43,6 @@ jobs:
     - name: Build application
       run: ./gradlew clean build -x test
 
-    - name: Debug runner environment
-      run: |
-        echo "PWD:"
-        pwd
-
-        echo "GITHUB_WORKSPACE:"
-        printf '%s\n' "$GITHUB_WORKSPACE"
-
-        echo "RUNNER_WORKSPACE:"
-        printf '%s\n' "$RUNNER_WORKSPACE"
-
-        echo "Working directory (escaped):"
-        printf '%q\n' "$PWD"
-
-        echo "Docker version:"
-        docker --version
-
-        echo "Docker Compose version:"
-        docker compose version
-
-        echo "Compose files:"
-        ls -lb
-
-        echo "Relevant environment variables:"
-        env | grep -E '^(DOCKER|COMPOSE|PWD|GITHUB_WORKSPACE|RUNNER_WORKSPACE)=' || true
-
     - name: Validate Docker Compose
       run: docker compose config -q
 
