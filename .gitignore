@@ -4,9 +4,9 @@
 config/
 
 # config 자바 파일 제외
-!/com/
-!/com/sp/
-!/com/sp/app/
+!com/
+!com/sp/
+!com/sp/app/
 !com/sp/app/config/
 !com/sp/app/config/**
 
