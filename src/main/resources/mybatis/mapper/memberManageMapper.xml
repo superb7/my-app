@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.app.admin.mapper.MemberManageMapper">
+    <!-- 회원 리스트 -->
+	<sql id="where-list">
+		<choose>
+			<when test="schType == 'login_id'">
+				( NSTR(m1.login_id, #{kwd}) &gt;= 1 OR INSTR(m1.sns_id, #{kwd}) &gt;= 1 )
+			</when>
+			<when test="schType == 'member_id'">
+				m1.member_id = #{kwd}
+			</when>
+			<otherwise>
+				INSTR(${schType}, #{kwd}) &gt;= 1
+			</otherwise>
+		</choose>
+	</sql>
+	
+	<select id="dataCount" parameterType="map" resultType="Integer">
+		SELECT COUNT(*)
+		FROM member1 m1
+		LEFT OUTER JOIN member2 m2 ON m1.member_id = m2.member_id
+		<where>
+			<if test="kwd != null and kwd != '' ">
+				<include refid="where-list"/>
+			</if>
+			<if test="enabled != ''">
+				AND enabled = #{enabled}
+			</if>
+			<choose>
+				<when test="role == 3 and non == 0">
+					AND ( userLevel &gt;= 51 AND userLevel &lt; 90 )
+				</when>
+				<when test="role == 3 and non == 1">
+					AND ( userLevel &gt;= 50 AND userLevel &lt; 90 )
+				</when>
+				<when test="role == 2">
+					AND userLevel = 31
+				</when>
+				<when test="role == 1 and non == 0">
+					AND userLevel = 1
+				</when>
+				<otherwise>
+					AND ( userLevel = 0 OR userLevel = 1 )
+				</otherwise>
+			</choose>
+		</where> 
+    </select>
+    
+	<select id="listMember" parameterType="map" resultType="com.sp.app.admin.domain.dto.MemberManageDto">
+		SELECT m1.member_id, m1.login_id, sns_provider, sns_id, userLevel, enabled, 
+			m1.created_at, m1.update_at, last_login,
+			name, email, tel, 
+			TO_CHAR(birth, 'YYYY-MM-DD') birth,
+			profile_photo
+		FROM member1 m1
+		LEFT OUTER JOIN member2 m2 ON m1.member_id = m2.member_id
+		<where>
+			<if test="kwd != null and kwd !='' ">
+				<include refid="where-list"/>
+			</if>
+			<if test="enabled != '' ">
+				AND enabled = #{enabled}
+			</if>
+			<choose>
+				<when test="role == 3 and non == 0">
+					AND ( userLevel &gt;= 51 AND userLevel &lt; 90 )
+				</when>
+				<when test="role == 3 and non == 1">
+					AND ( userLevel &gt;= 50 AND userLevel &lt; 90 )
+				</when>
+				<when test="role == 2">
+					AND userLevel = 31
+				</when>
+				<when test="role == 1 and non == 0">
+					AND userLevel = 1
+				</when>
+				<otherwise>
+					AND ( userLevel = 0 OR userLevel = 1 )
+				</otherwise>
+			</choose>
+		</where> 
+		ORDER BY created_at DESC
+		OFFSET #{offset} ROWS FETCH FIRST #{size} ROWS ONLY
+	</select>
+
+	<select id="findById" parameterType="Long" resultType="com.sp.app.admin.domain.dto.MemberManageDto">
+		SELECT m1.member_id, m1.login_id, password, sns_provider, sns_id, userLevel, enabled, 
+			created_at, update_at, last_login, failure_cnt,
+			name, TO_CHAR(birth, 'YYYY-MM-DD') birth, 
+			NVL(TRUNC(MONTHS_BETWEEN(SYSDATE, birth)/12), -1) age, 
+			email, receive_email, tel, profile_photo,
+			zip, addr1, addr2, ipAddr
+		FROM member1 m1
+		LEFT OUTER JOIN member2 m2 ON m1.member_id = m2.member_id
+		WHERE m1.member_id = #{member_id}
+	</select>
+	
+	<update id="updateFailureCountReset" parameterType="Long">
+		UPDATE member1 SET failure_cnt = 0
+		WHERE member_id = #{member_id}
+	</update>
+
+    <update id="updateMember1" parameterType="map">
+		UPDATE member1 SET userLevel = #{userLevel}, enabled = #{enabled}
+		WHERE member_id = #{member_id}
+    </update>
+    <update id="updateMember2" parameterType="map">
+		UPDATE member2 SET name = #{name}, birth = TO_DATE(#{birth}, 'YYYY-MM-DD')
+		WHERE member_id = #{member_id}
+    </update>
+    
+    <update id="updateMemberLevel" parameterType="map">
+		UPDATE member1 SET userLevel = #{userLevel}
+		WHERE member_id = #{member_id}
+    </update>
+    <update id="updateMemberEnabled" parameterType="map">
+		UPDATE member1 SET enabled = #{enabled}
+		WHERE member_id = #{member_id}
+    </update>
+    
+    <delete id="deleteMember1" parameterType="map">
+		DELETE FROM member1
+		WHERE member_id = #{member_id}
+    </delete>
+    
+    <delete id="deleteMember2" parameterType="map">
+		DELETE FROM member2
+		WHERE member_id = #{member_id}
+    </delete>
+        
+	<insert id="insertMemberStatus" parameterType="com.sp.app.admin.domain.dto.MemberManageDto">
+		INSERT INTO memberStatus(num, member_id, status_code, memo, register_id, reg_date)
+		VALUES (memberStatus_seq.NEXTVAL, #{member_id}, #{status_code}, #{memo}, #{register_id}, SYSDATE)
+	</insert>
+	
+	<select id="listMemberStatus" parameterType="Long" resultType="com.sp.app.admin.domain.dto.MemberManageDto">
+		SELECT num, ms.member_id, status_code, memo, register_id, name registerName, reg_date
+		FROM memberStatus ms
+		LEFT OUTER JOIN member2 m2 ON ms.register_id = m2.member_id		
+		WHERE ms.member_id = #{member_id}
+		ORDER BY num DESC
+	</select>
+
+	<select id="findByStatus" parameterType="Long" resultType="com.sp.app.admin.domain.dto.MemberManageDto">
+		SELECT num, ms.member_id, status_code, memo, register_id, name registerName, reg_date
+		FROM memberStatus ms
+		LEFT OUTER JOIN member2 m2 ON ms.register_id = m2.member_id		
+		WHERE ms.member_id = #{member_id}
+		ORDER BY num DESC
+		FETCH FIRST 1 ROWS ONLY
+	</select>
+
+	<!-- 챠트 쿼리 -->
+	<select id="listAgeSection" resultType="map">
+		WITH  memberAge AS (
+		    SELECT m2.member_id, TRUNC(MONTHS_BETWEEN(SYSDATE, birth)/12) age
+		    FROM member1 m1
+			JOIN member2 m2 ON m1.member_id = m2.member_id
+			WHERE userLevel &gt; 0 AND userLevel &lt; 50
+		)
+		SELECT '10대' section, COUNT(*) count FROM memberAge WHERE age &gt;= 10 AND age &lt; 20
+		UNION ALL
+		SELECT '20대' section, COUNT(*) count FROM memberAge WHERE age &gt;= 20 AND age &lt; 30
+		UNION ALL
+		SELECT '30대' section, COUNT(*) count FROM memberAge WHERE age &gt;= 30 AND age &lt; 40
+		UNION ALL
+		SELECT '40대' section, COUNT(*) count FROM memberAge WHERE age &gt;= 40 AND age &lt; 50
+		UNION ALL
+		SELECT '50대' section, COUNT(*) count FROM memberAge WHERE age &gt;= 50 AND age &lt; 60
+		UNION ALL
+		SELECT '60대' section, COUNT(*) count FROM memberAge WHERE age &gt;= 60 AND age &lt; 70
+		UNION ALL
+		SELECT '기타' section, COUNT(*) count FROM memberAge WHERE age &lt; 10 OR age &gt;= 70
+	</select>
+</mapper>

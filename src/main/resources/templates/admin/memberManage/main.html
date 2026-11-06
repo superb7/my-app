@@ -1,0 +1,341 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{admin/layout/layout3}">
+      
+<th:block layout:fragment="css">
+	<link rel="stylesheet" th:href="@{/dist/css/tabs.css}" type="text/css">
+	<link rel="stylesheet" th:href="@{/dist/css/board.css}" type="text/css">
+	<link rel="stylesheet" th:href="@{/dist/css/paginate.css}" type="text/css">
+</th:block>
+
+<th:block layout:fragment="content">
+	<div class="page-title" data-aos="fade-up" data-aos-delay="200">
+		<h2>회원관리</h2>
+	</div>
+
+	<div class="section p-5" data-aos="fade-up" data-aos-delay="200">
+		<div class="section-body p-5">
+
+			<ul class="nav nav-tabs" id="myTab" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button class="nav-link active" id="tab-1" data-bs-toggle="tab" data-bs-target="#nav-content" type="button" role="tab" aria-selected="true" data-tab="1"> <i class="bi bi-person-fill"></i> 회원</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="tab-2" data-bs-toggle="tab" data-bs-target="#nav-content" type="button" role="tab" aria-selected="true" data-tab="2"> <i class="bi bi-mortarboard-fill"></i> 강사</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="tab-3" data-bs-toggle="tab" data-bs-target="#nav-content" type="button" role="tab" aria-selected="true" data-tab="3"> <i class="bi bi-person-lines-fill"></i> 사원</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="tab-4" data-bs-toggle="tab" data-bs-target="#nav-content" type="button" role="tab" aria-selected="true" data-tab="4"> <i class="bi bi-bar-chart-line"></i> 분석</button>
+				</li>
+			</ul>
+			
+			<div class="tab-content pt-3" id="nav-tabContent"></div>
+			
+			<form name="memberSearchForm">
+				<input type="hidden" name="schType" value="login_id">
+				<input type="hidden" name="kwd" value="">
+				<input type="hidden" name="role" value="1">
+				<input type="hidden" name="non" value="0">
+				<input type="hidden" name="enabled" value="">
+			</form>
+
+		</div>
+	</div>
+</th:block>
+ 
+<th:block layout:fragment="script">
+	<script type="text/javascript" th:src="@{/dist/js/util-async.js}"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+	
+	<script type="text/javascript">
+		document.addEventListener('DOMContentLoaded', function () {
+			document.getElementById('tab-1').classList.add('active');
+			
+			document.querySelectorAll('button[role="tab"]').forEach(button => {
+				button.addEventListener('click', () => {
+					const tab = button.dataset.tab;
+					if(tab !== '4') {
+						// 회원, 강사, 직원 리스트
+						resetList();
+					} else {
+						// 연령별 어낼러시스(분석)
+						memberAnalysis();
+					}
+				});
+			});
+		});
+		
+		document.addEventListener('DOMContentLoaded', function () {
+			listMember(1);
+		});
+		
+		function listMember(page) {
+			const url = '[(@{/admin/memberManage/list})]';
+			const form = document.querySelector('form[name="memberSearchForm"]');
+			const formData = new FormData(form);
+
+			const params = new URLSearchParams(formData);
+			// params.append('page', page); // 추가
+			params.set('page', page); // 존재하면 덮어쓰고, 없으면 추가
+
+			const queryString = params.toString();
+			
+			const fn = function(data) {
+				document.getElementById('nav-tabContent').innerHTML = data;
+			};
+			
+			fetchRequest(url, 'get', queryString, 'form', 'text')
+				.then(data => {
+					fn(data);
+				})
+				.catch(error => console.log(error));
+		}
+	
+		function resetList() {
+			// 초기화
+			const tabElement = document.querySelector('button[role="tab"].active');
+			const role = tabElement?.getAttribute('data-tab');
+
+			const f = document.memberSearchForm;
+			
+			f.schType.value = 'login_id';
+			f.kwd.value = '';
+			f.role.value = role;
+			f.non.value = 0;
+			f.enabled.value = '';
+			
+			listMember(1);
+		}
+
+		function searchList() {
+			// 검색
+			const f = document.memberSearchForm;
+			
+			f.schType.value = document.getElementById('searchType').value;
+			f.kwd.value = document.getElementById('keyword').value;
+			
+			listMember(1);
+		}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			// 회원 리스트 상단 검색 checkbox
+			document.getElementById('nav-tabContent').addEventListener('click', ({ target }) => {
+				if (!target.matches('.wrap-search-check input[type="checkbox"]')) return;
+
+				const enabled1 = document.getElementById('enabledCheck1').checked;
+				const enabled2 = document.getElementById('enabledCheck2').checked;
+
+				let enabled = '';
+				if (enabled1 && !enabled2) enabled = '1';
+				else if (!enabled1 && enabled2) enabled = '0';
+
+				const non = document.getElementById('nonMemberCheckbox').checked ? 1 : 0;
+
+				const form = document.forms.memberSearchForm;
+				form.non.value = non;
+				form.enabled.value = enabled;
+
+				listMember(1);
+			});
+		});
+		
+		function profile(member_id, page) {
+			// 모달이 제대로 작동죄지 않는 현상을 위해 body로 옮긴 모달이 존재하는 경우 제거
+			document.getElementById('memberStatusDetailsDialogModal')?.remove();
+			document.getElementById('memberUpdateDialogModal')?.remove();
+			
+			// 회원 상세 보기
+			const url = '[(@{/admin/memberManage/profile})]';
+			const params = 'member_id=' + member_id + '&page=' + page;
+
+			const fn = function(data) {
+				document.getElementById('nav-tabContent').innerHTML = data
+			};
+			
+			fetchRequest(url, 'get', params, 'form', 'text')
+				.then(data => {
+					fn(data);
+				})
+				.catch(error => console.log(error));
+		}
+		
+		function statusDetailsMember() {
+			// data-aos 에 의해 부모에 transform css로 인하여 모달이 제대로 작동되지 않는 현상 해결
+			const modalElement = document.getElementById('memberStatusDetailsDialogModal');
+			document.body.appendChild(modalElement);
+
+			const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+			modal.show();	
+		}
+
+		function selectStatusChange() {
+			const f = document.memberStatusDetailsForm;
+
+			let code = f.status_code.value;
+			let memo = f.status_code.options[f.status_code.selectedIndex].text;
+			
+			f.memo.value = '';	
+			if(! code) {
+				return;
+			}
+
+			if(code!=='0' && code!=='8') {
+				f.memo.value = memo;
+			}
+			
+			f.memo.focus();
+		}
+		
+		function updateMember() {
+			// data-aos 에 의해 부모에 transform css로 인하여 모달이 제대로 작동되지 않는 현상 해결
+			const modalElement = document.getElementById('memberUpdateDialogModal');
+			document.body.appendChild(modalElement);
+
+			const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+			modal.show();
+		}
+		
+		function updateMemberOk(page) {
+			// 회원 정보 변경(권한, 이름, 생년월일)
+			const f = document.memberUpdateForm;
+
+			if( ! f.name.value ) {
+				alert('이름을 입력 하세요.');
+				f.name.focus();
+				return;
+			}
+			
+			if(f.userLevel.value === '0' || f.userLevel.value === '50') {
+				f.enabled.value = '0';	
+			}
+			
+			if( ! confirm('회원 정보를 수정하시겠습니까 ? ')) {
+				return;
+			}
+			
+			const url = '[(@{/admin/memberManage/updateMember})]';
+			const formData = new FormData(f);
+			const params = new URLSearchParams(formData).toString();
+			
+			const fn = function(data){
+				listMember(page);
+			};
+			
+			fetchRequest(url, 'put', params, 'form', 'json')
+				.then(data => {
+					fn(data);
+				})
+				.catch(error => console.log(error));	
+			
+			const modalElement = document.getElementById('memberUpdateDialogModal');
+			const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+			modal.hide();
+		}
+		
+		function deleteMember(memberIdx) {
+			// 회원 삭제
+			
+		}
+
+		function updateStatusOk(page) {
+			// 회원 상태 변경
+			const f = document.memberStatusDetailsForm;
+
+			if( ! f.status_code.value ) {
+				alert('상태 코드를 선택하세요.');
+				f.status_code.focus();
+				return;
+			}
+			if( ! f.memo.value.trim() ) {
+				alert('상태 메모를 입력하세요.');
+				f.memo.focus();
+				return;
+			}
+			
+			if( ! confirm('상태 정보를 수정하시겠습니까 ? ')) {
+				return;
+			}
+			
+			const url = '[(@{/admin/memberManage/memberStatus})]';
+			const formData = new FormData(f);
+			const params = new URLSearchParams(formData).toString();
+			
+			const fn = function(data){
+				listMember(page);
+			};
+			
+			fetchRequest(url, 'post', params, 'form', 'json')
+				.then(data => {
+					fn(data);
+				})
+				.catch(error => console.log(error));
+			
+			const modalElement = document.getElementById('memberStatusDetailsDialogModal');
+			const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+			modal.hide();
+		}
+		
+		function memberAnalysis() {
+			// 연령별 어낼러시스 - echarts bar
+			let out;
+			out = `
+				<div class="row gy-4 mt-2">
+					<div class="col-md-4">
+						<h6 class="text-center">연령대별 회원수</h6>
+						<div id="barchart-container" style="height: 370px;"></div>
+					</div>
+				</div>
+			`;
+			
+			// document.getElementById('nav-tabContent').innerHTML = '';
+			document.getElementById('nav-tabContent').innerHTML = out;
+			
+			const url = '[(@{/admin/memberManage/memberAgeSection})]';
+			const fn = function(data) {
+				let titles = [];
+				let values = [];
+				
+				for(let item of data.list) {
+					titles.push(item.SECTION);
+					values.push(item.COUNT);
+				}
+				
+				const chartDom = document.querySelector('#barchart-container');
+				let myChart = echarts.init(chartDom);
+				let option;
+				
+				option = {
+					tooltip: {
+						trigger: 'item'
+					},
+					xAxis: {
+						type: 'category',
+						data: titles
+					},
+					yAxis: {
+						type: 'value'
+					},
+					series: [
+						{
+							data: values,
+							type: 'bar'
+						}
+					]
+				};
+						
+				option && myChart.setOption(option);		
+			};
+			
+			fetchRequest(url, 'get', null, 'form', 'json')
+				.then(data => {
+					fn(data);
+				})
+				.catch(error => console.log(error));			
+		}
+	</script>
+</th:block>
+  
+</html>
